@@ -8,6 +8,10 @@ import android.widget.Chronometer
 
 class MainActivity : AppCompatActivity() {
 
+    val OFFSET_KEY = "offset"
+    val RUNNING_KEY = "running"
+    val BASE_KEY = "base"
+
     lateinit var stopwatch: Chronometer    // The stopwatch
     var running = false    // Is the stopwatch running?
     var offset: Long = 0    //The base offset for the stopwatch
@@ -18,6 +22,16 @@ class MainActivity : AppCompatActivity() {
 
         //Get a reference to stopwatch
         stopwatch = findViewById(R.id.stopwatch)
+
+        //Restore the previous state
+        if (savedInstanceState != null){
+            offset = savedInstanceState.getLong(OFFSET_KEY)
+            running = savedInstanceState.getBoolean(RUNNING_KEY)
+            if (running){
+                stopwatch.base = savedInstanceState.getLong(BASE_KEY)
+                stopwatch.start()
+            } else setBaseTime()
+        }
 
         // The start button starts the stopwatch if it's not running
         val startButton = findViewById<Button>(R.id.start_button)
@@ -55,5 +69,29 @@ class MainActivity : AppCompatActivity() {
     // Update the stopwatch.bas time, allowing for any offset
     private fun setBaseTime() {
         stopwatch.base = SystemClock.elapsedRealtime() - offset
+    }
+
+    override fun onSaveInstanceState(savedInstanceState: Bundle) {
+        savedInstanceState.putLong(OFFSET_KEY, offset)
+        savedInstanceState.putBoolean(RUNNING_KEY, running)
+        savedInstanceState.putLong(BASE_KEY, stopwatch.base)
+        super.onSaveInstanceState(savedInstanceState)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (running){
+            setBaseTime()
+            stopwatch.start()
+            offset = 0
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (running){
+            saveOffset()
+            stopwatch.stop()
+        }
     }
 }
